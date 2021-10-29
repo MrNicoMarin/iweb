@@ -29,7 +29,7 @@ class UsuarioManager(BaseUserManager):
 
 
 # Create your models here.
-class Usuario (AbstractBaseUser):
+class Usuario (AbstractBaseUser, PermissionsMixin):
     email = EmailField(max_length=100, unique=True)
     name = CharField(max_length=50)
     is_staff = models.BooleanField(default=False)
