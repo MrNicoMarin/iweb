@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.fields import CharField, EmailField
+from django.db.models.fields import CharField, DateField, EmailField, FloatField, IntegerField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 class UsuarioManager(BaseUserManager):
@@ -24,6 +24,8 @@ class UsuarioManager(BaseUserManager):
         user.save(using=self._db)
 
         return user
+    
+
 
 
 # Create your models here.
@@ -37,3 +39,19 @@ class Usuario (AbstractBaseUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
+class Comentario (models.Model):
+    usuario = models.ManyToManyField(Usuario)
+    texto = CharField(max_length=100)
+    fecha = DateField(auto_now=True)
+    puntuacion = IntegerField()  
+    
+
+class Ubicacion (models.Model):
+    latitud = FloatField()
+    longitud = FloatField()
+    
+class Trayecto(models.Model):
+    origen = models.ForeignKey(Ubicacion)
+    destino = models.ForeignKey(Ubicacion)
+    
+    
