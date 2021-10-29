@@ -24,11 +24,7 @@ class UsuarioManager(BaseUserManager):
         user.save(using=self._db)
 
         return user
-    
 
-
-
-# Create your models here.
 class Usuario (AbstractBaseUser, PermissionsMixin):
     email = EmailField(max_length=100, unique=True)
     name = CharField(max_length=50)
@@ -40,18 +36,17 @@ class Usuario (AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = ['name']
 
 class Comentario (models.Model):
-    usuario = models.ManyToManyField(Usuario)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     texto = CharField(max_length=100)
     fecha = DateField(auto_now=True)
     puntuacion = IntegerField()  
-    
 
 class Ubicacion (models.Model):
     latitud = FloatField()
     longitud = FloatField()
     
 class Trayecto(models.Model):
-    origen = models.ForeignKey(Ubicacion)
-    destino = models.ForeignKey(Ubicacion)
+    origen = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='origen')
+    destino = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='destino')
     
     
