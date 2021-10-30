@@ -6,4 +6,3 @@ from zoomcar.models import Comentario, Trayecto, Ubicacion, Usuario
 admin.site.register(Usuario)
 admin.site.register(Ubicacion)
 admin.site.register(Trayecto)
-admin.site.register(Comentario)
