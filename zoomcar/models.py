@@ -28,6 +28,7 @@ class UsuarioManager(BaseUserManager):
 class Usuario (AbstractBaseUser, PermissionsMixin):
     email = EmailField(max_length=100, unique=True)
     name = CharField(max_length=50)
+    apellidos = CharField(max_length=100, default=None)
     is_staff = models.BooleanField(default=False)
 
     objects = UsuarioManager()
@@ -35,18 +36,22 @@ class Usuario (AbstractBaseUser, PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
 
-class Comentario (models.Model):
-    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    texto = CharField(max_length=100)
-    fecha = DateField(auto_now=True)
-    puntuacion = IntegerField()  
 
 class Ubicacion (models.Model):
     latitud = FloatField()
     longitud = FloatField()
-    
+
+class Vehiculo(models.Model):
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    modelo = CharField(max_length=50)
+    color = CharField(max_length=20)
+    matricula = CharField(max_length=10)
+    imagen = CharField(max_length=100)
+    plazas = IntegerField()
+
 class Trayecto(models.Model):
     origen = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='origen')
+    paradas = models.ManyToManyField(Ubicacion)
     destino = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='destino')
-    
-    
+    piloto = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE)
