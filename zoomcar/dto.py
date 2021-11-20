@@ -7,14 +7,12 @@ class UsuarioDto():
         self.name = None
         self.email = None
         self.apellidos = None
-        self.password = None
 
     def __init__(self, usuario):
         self.id = usuario.id
         self.name = usuario.name
         self.email = usuario.email
         self.apellidos = usuario.apellidos
-        self.password = None
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 

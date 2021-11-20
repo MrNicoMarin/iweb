@@ -3,10 +3,10 @@ from rest_framework import serializers
 class UsuarioSerializer(serializers.Serializer):
 
     id = serializers.IntegerField()
-    password = serializers.CharField()
+    password = serializers.CharField(required=False)
     name = serializers.CharField()
     email = serializers.CharField()
-    apellidos = serializers.CharField()
+    apellidos = serializers.CharField(required=False)
 
 class UbicacionSerializer(serializers.Serializer):
     longitud = serializers.FloatField()
