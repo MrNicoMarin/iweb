@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models.fields import CharField, DateField, EmailField, FloatField, IntegerField
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+from datetime import datetime
 
 class UsuarioManager(BaseUserManager):
     def create_user(self, email, name, password):
@@ -30,6 +31,8 @@ class Usuario (AbstractBaseUser, PermissionsMixin):
     name = CharField(max_length=50)
     apellidos = CharField(max_length=100, default=None)
     is_staff = models.BooleanField(default=False)
+    imagen = models.CharField(max_length=100)
+    fechaNacimiento = models.DateField()
 
     objects = UsuarioManager()
 
@@ -40,6 +43,7 @@ class Usuario (AbstractBaseUser, PermissionsMixin):
 class Ubicacion (models.Model):
     latitud = FloatField()
     longitud = FloatField()
+    municipio = CharField(max_length=50)
 
 class Vehiculo(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
@@ -55,3 +59,10 @@ class Trayecto(models.Model):
     destino = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='destino')
     piloto = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE)
+    precio = models.DecimalField(decimal_places=2, max_digits=5)
+    fechaSalida = models.DateTimeField()
+
+class Reserva(models.Model):
+    trayecto = models.ForeignKey(Trayecto, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    fechaReserva = models.DateTimeField(default=datetime.now)
