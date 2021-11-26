@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from zoomcar.dto import UsuarioDto, VehiculoDto, TrayectoDto
 from zoomcar.serializers import GasolineraSerializer, UsuarioSerializer, VehiculoSerializer, TrayectoSerializer
 from zoomcar.models import Usuario, Vehiculo, Trayecto, Ubicacion
-from datetime import datetime
+from datetime import date, datetime
 import requests
 from geopy import distance,Nominatim
 import unicodedata
@@ -14,6 +14,11 @@ URL_AEMET = "https://opendata.aemet.es/opendata/api/"
 API_KEY_AEMET = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbnRvbmlvc2RAdW1hLmVzIiwianRpIjoiNTk0MTE3ZWYtM2UxYi00MTExLTliN2UtNjk3MDczNTdjNDI5IiwiaXNzIjoiQUVNRVQiLCJpYXQiOjE2MzU1OTA2NTIsInVzZXJJZCI6IjU5NDExN2VmLTNlMWItNDExMS05YjdlLTY5NzA3MzU3YzQyOSIsInJvbGUiOiIifQ.5qkhM2s0Zwd81shKKo5QnTNDrZIUGVrIrwwp_bdMkX4"
 USER_AGENT = "https://www.zoomcar.es/geocoding?email=nicolasqm@uma.es"
 URL_INCIDENCIAS_TRAFICO = "https://services1.arcgis.com/nCKYwcSONQTkPA4K/arcgis/rest/services/incidencias_DGT/FeatureServer/0/query"
+
+GASOLINERA_RESPONSE = None
+GASOLINERA_TIMESTAMP = 0
+
+MUNICIPIOS_RESPONSE = None
 
 
 ### Usuario ###
@@ -517,9 +522,17 @@ class GasolineraAPIView(APIView):
         else:
             return Response({"mensaje":"Falta el campo distancia"},status=status.HTTP_400_BAD_REQUEST)
         
-        respuesta = requests.get(URL_GASOLINERAS,headers={"Content-Type" : "application/json"})
+        now = datetime.timestamp(datetime.now())
+
+        global GASOLINERA_RESPONSE
+        global GASOLINERA_TIMESTAMP
+
+        # Actualizar respuesta cacheada cada media hora
+        if (now - GASOLINERA_TIMESTAMP >= 1800):
+            GASOLINERA_RESPONSE = requests.get(URL_GASOLINERAS,headers={"Content-Type" : "application/json"})
+            GASOLINERA_TIMESTAMP = now
         
-        json = respuesta.json()
+        json = GASOLINERA_RESPONSE.json()
         
         gasolinerasFiltro = []
         for gasolinera in json.get('ListaEESSPrecio'):
@@ -606,9 +619,13 @@ class TiempoView(APIView):
         else:
             return Response({"mensaje":"Falta el campo hora"},status=status.HTTP_400_BAD_REQUEST)
         
-        respuestaAllMunicipios = requests.get(URL_AEMET + "/maestro/municipios",headers={"Content-Type" : "application/json","api_key":API_KEY_AEMET})
+        global MUNICIPIOS_RESPONSE
 
-        municipioID = getMunicipioID(respuestaAllMunicipios.json(), municipio)
+        # Cacheamos listado de municipios
+        if MUNICIPIOS_RESPONSE is None:
+            MUNICIPIOS_RESPONSE = requests.get(URL_AEMET + "/maestro/municipios",headers={"Content-Type" : "application/json","api_key":API_KEY_AEMET})
+
+        municipioID = getMunicipioID(MUNICIPIOS_RESPONSE.json(), municipio)
 
         if municipioID is None :
             return Response({"mensaje" : "El nombre del municipio es incorrecto"},status=status.HTTP_400_BAD_REQUEST)
