@@ -139,8 +139,30 @@ class ReservaDto():
     def toReservaDto(reservas):
         lista = []
         for u in reservas:
-            lista.append(ReservaDto)
+            lista.append(ReservaDto(u))
         return lista
     
 
+class GasolineraDto():
     
+    def __init__(self,Direccion,Horario,Latitud,Municipio,Longitud,PrecioGA,PrecioGPremium,Precio95,Precio98):
+        self.Direccion = Direccion
+        self.Horario = Horario
+        self.Latitud = Latitud
+        self.Municipio = Municipio
+        self.Longitud = float(Longitud)
+        self.PrecioGA = float(PrecioGA)
+        self.PrecioGPremium = float(PrecioGPremium)
+        self.Precio95 = float(Precio95)
+        self.Precio98 = float(Precio98)
+    
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+    
+    @staticmethod
+    def toGasolineraDto(gasolineras):
+        lista = []
+        for u in gasolineras:
+            lista.append(GasolineraDto(u))
+        return lista

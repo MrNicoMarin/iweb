@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from zoomcar.dto import UbicacionDto, UsuarioDto, VehiculoDto, TrayectoDto
+from zoomcar.dto import GasolineraDto, UbicacionDto, UsuarioDto, VehiculoDto, TrayectoDto
 
 class UsuarioSerializer(serializers.Serializer):
 
@@ -38,7 +38,7 @@ class VehiculoSerializer(serializers.Serializer):
 
 class TrayectoSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
-    paradas = UbicacionSerializer(required=False)
+    paradas = UbicacionSerializer(required=False,many=True)
     origen = UbicacionSerializer(required=False)
     destino = UbicacionSerializer(required=False)
     piloto = UsuarioSerializer(required=False)
@@ -54,5 +54,18 @@ class ReservaSerializer(serializers.Serializer):
     usuario = UsuarioSerializer()
     fechaReserva = serializers.DateTimeField()
 
+class GasolineraSerializer(serializers.Serializer):
 
-    
+    Direccion = serializers.CharField(source="Dirección",required=False)
+    Horario = serializers.CharField(required=False)
+    Latitud = serializers.CharField(required=False)
+    Municipio = serializers.CharField(required=False)
+    Longitud = serializers.CharField(source="Longitud (WGS84)",required=False)
+    PrecioGA = serializers.CharField(source="Precio Gasoleo A",required=False)
+    PrecioGPremium = serializers.CharField(source="Precio Gasoleo Premium",required=False)
+    Precio95 = serializers.CharField(source="Precio Gasolina 95 E5",required=False)
+    Precio98 = serializers.CharField(source="Precio Gasolina 98 E5",required=False)
+
+    def create(self, validated_data):
+        return GasolineraDto(**validated_data)
+
