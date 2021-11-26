@@ -59,7 +59,7 @@ class Trayecto(models.Model):
     destino = models.ForeignKey(Ubicacion, on_delete=models.CASCADE, related_name='destino')
     piloto = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     vehiculo = models.ForeignKey(Vehiculo, on_delete=models.CASCADE)
-    precio = models.DecimalField(decimal_places=2, max_digits=5)
+    precio = models.FloatField()
     fechaSalida = models.DateTimeField()
 
 class Reserva(models.Model):

@@ -13,5 +13,4 @@ urlpatterns = [
     path("gasolineras", GasolineraAPIView.as_view()),
     path("predicciones", TiempoView.as_view()),
     path("incidenciasTrafico", IncidenciasTraficoAPIView.as_view())
-
 ]
