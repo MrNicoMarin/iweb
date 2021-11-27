@@ -11,3 +11,4 @@ certifi==2021.10.8
 idna==3.3
 geographiclib==1.52
 geopy==2.2.0
+pyproj==3.3.0

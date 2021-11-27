@@ -8,6 +8,7 @@ from datetime import date, datetime
 import requests
 from geopy import distance,Nominatim
 import unicodedata
+from pyproj import Transformer
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
 URL_AEMET = "https://opendata.aemet.es/opendata/api/"
@@ -645,26 +646,19 @@ class TiempoView(APIView):
 
 class IncidenciasTraficoAPIView(APIView):
     def get(self,request,format=None):
-        
-        #?f=json&where=(provincia%20IN%20(%27SEVILLA%27))&outFields=poblacion,actualizad,fechahora_,carretera
         if request.query_params.get('municipio') is None:
             return Response(status=status.HTTP_400_BAD_REQUEST)
             
         municipio = request.query_params.get('municipio')
-        respuesta = requests.get(URL_INCIDENCIAS_TRAFICO + "?f=json&where=(poblacion%20IN%20(%27" + municipio + "%27))&outFields=poblacion,actualizad,fechahora_,carretera")#, headers={"Content-Type" : "application/json"})
-            
-        
-        #if request.query_params.get('provincia') is None:
-        #    return Response(status=status.HTTP_400_BAD_REQUEST)
-            
-        #provincia = request.query_params.get('provincia')
-		#respuesta = requests.get(URL_INCIDENCIAS_TRAFICO + "?f=json&where=(provincia%20IN%20(%27" + provincia + "%27))&outFields=poblacion,actualizad,fechahora_,carretera")#, headers={"Content-Type" : "application/json"})
-            
+        respuesta = requests.get(URL_INCIDENCIAS_TRAFICO + "?f=json&where=(poblacion%20IN%20(%27" + municipio + "%27))&outFields=poblacion,fechahora_,carretera,causa")
         
         json = respuesta.json().get('features')
         
         incidenciasTotales = []
+        transformer = Transformer.from_crs("epsg:3857","epsg:4326")
         for features in json:
-        	incidenciasTotales.append(features)
+            attributes = features.get('attributes')
+            latitud, longitud = transformer.transform(float(features.get('geometry').get('x')), float(features.get('geometry').get('y')))
+            incidenciasTotales.append({'poblacion' : attributes.get('poblacion'), 'fecha' : attributes.get('fechahora_'), 'carretera' : attributes.get('carretera'), 'causa' : attributes.get('causa'), 'latitud' : latitud, 'longitud' : longitud})
 
         return Response(incidenciasTotales,status=status.HTTP_200_OK)
