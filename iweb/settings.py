@@ -85,7 +85,7 @@ DATABASES = {
         'NAME': 'iweb',
         'ENFORCE_SCHEMA' : False,
         'CLIENT' : {
-            'host' : 'mongodb+srv://iWeb:grupoB3@iweb.5yqmj.mongodb.net/iweb?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE'
+            'host' : 'mongodb+srv://admin:admin@cluster0.hcbd5.mongodb.net/myFirstDatabase?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE'
         }
     }
 }
@@ -133,5 +133,3 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-AUTH_USER_MODEL = 'zoomcar.Usuario'
