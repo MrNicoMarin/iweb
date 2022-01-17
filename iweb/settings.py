@@ -82,10 +82,10 @@ WSGI_APPLICATION = 'iweb.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'iweb',
+        'NAME': 'iwebDefinitiva',
         'ENFORCE_SCHEMA' : False,
         'CLIENT' : {
-            'host' : 'mongodb+srv://iWeb:grupoB3@iweb.5yqmj.mongodb.net/iweb?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE'
+            'host' : 'mongodb+srv://iWeb:grupoB3@iweb.5yqmj.mongodb.net/iwebDefinitiva?retryWrites=true&w=majority&ssl=true&ssl_cert_reqs=CERT_NONE'
         }
     }
 }

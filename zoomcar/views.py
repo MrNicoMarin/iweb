@@ -9,13 +9,15 @@ import requests
 from geopy import distance,Nominatim
 import unicodedata
 from pyproj import Transformer
+from google.oauth2 import id_token
+from google.auth.transport import requests
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
 URL_AEMET = "https://opendata.aemet.es/opendata/api/"
 API_KEY_AEMET = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbnRvbmlvc2RAdW1hLmVzIiwianRpIjoiNTk0MTE3ZWYtM2UxYi00MTExLTliN2UtNjk3MDczNTdjNDI5IiwiaXNzIjoiQUVNRVQiLCJpYXQiOjE2MzU1OTA2NTIsInVzZXJJZCI6IjU5NDExN2VmLTNlMWItNDExMS05YjdlLTY5NzA3MzU3YzQyOSIsInJvbGUiOiIifQ.5qkhM2s0Zwd81shKKo5QnTNDrZIUGVrIrwwp_bdMkX4"
 USER_AGENT = "https://www.zoomcar.es/geocoding?email=nicolasqm@uma.es"
 URL_INCIDENCIAS_TRAFICO = "https://services1.arcgis.com/nCKYwcSONQTkPA4K/arcgis/rest/services/incidencias_DGT/FeatureServer/0/query"
-
+CLIENT_ID = "860266555787-337c130jdi6jar97gkmomb1dq71sv02i.apps.googleusercontent.com"
 GASOLINERA_RESPONSE = None
 GASOLINERA_TIMESTAMP = 0
 
@@ -662,3 +664,52 @@ class IncidenciasTraficoAPIView(APIView):
             incidenciasTotales.append({'poblacion' : attributes.get('poblacion'), 'fecha' : attributes.get('fechahora_'), 'carretera' : attributes.get('carretera'), 'causa' : attributes.get('causa'), 'latitud' : latitud, 'longitud' : longitud})
 
         return Response(incidenciasTotales,status=status.HTTP_200_OK)
+
+#============================================================================================================================
+#============================================================================================================================
+#============================================================================================================================
+#============================================================================================================================
+#============================================================================================================================
+#============================================================================================================================
+
+# Google Login
+
+class LoginGoogle(APIView):
+    def post(self,request,format=None):
+        if request.headers.get('Authorization') is not None:
+            
+            token = request.headers.get('Authorization')
+            idinfo = None
+            try:
+                idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+            except:
+                return Response({"mensaje": "Token caducado"}, status=status.HTTP_400_BAD_REQUEST)
+
+            email = idinfo['email']
+            usuario = None
+
+            try:
+                usuario = Usuario.objects.get(email=email)
+            except:
+
+                name = idinfo['name']
+                apellidos = idinfo['family_name']
+                imagen = idinfo['picture']
+
+                
+                usuario = Usuario(
+                    email = email,
+                    name = name,
+                    apellidos = apellidos,
+                    imagen = imagen,
+                    fechaNacimiento = datetime.today()
+                )
+
+                usuario.save()
+
+            userDTO = UsuarioDto(usuario)
+            serializer = UsuarioSerializer(userDTO)
+            return Response(serializer.data,status=status.HTTP_200_OK)
+
+        else :
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_400_BAD_REQUEST)
