@@ -1,5 +1,5 @@
 from django.urls import path
-from zoomcar.views import UsuarioView, UsuarioIDView, VehiculoIDView, VehiculoView, TrayectoView, TrayectoIDView, VehiculosUsuarioView, TrayectosUsuarioView, GasolineraAPIView, TiempoView, IncidenciasTraficoAPIView, LoginGoogle
+from zoomcar.views import ComentarioUsuarioView, ComentarioView, ReservaIDView, ReservasTrayectosView, ReservasUsuarioView, ReservasView, UsuarioView, UsuarioIDView, VehiculoIDView, VehiculoView, TrayectoView, TrayectoIDView, VehiculosUsuarioView, TrayectosUsuarioView, GasolineraAPIView, TiempoView, IncidenciasTraficoAPIView, LoginGoogle
 
 urlpatterns = [
     path("usuarios", UsuarioView.as_view()),
@@ -13,5 +13,11 @@ urlpatterns = [
     path("gasolineras", GasolineraAPIView.as_view()),
     path("predicciones", TiempoView.as_view()),
     path("incidenciasTrafico", IncidenciasTraficoAPIView.as_view()),
-    path("oauth", LoginGoogle.as_view())
+    path("oauth", LoginGoogle.as_view()),
+    path("usuarios/<int:id>/reservas", ReservasUsuarioView.as_view()),
+    path("reservas", ReservasView.as_view()),
+    path("reservas/<int:id>", ReservaIDView.as_view()),
+    path("trayectos/<int:id>/reservas", ReservasTrayectosView.as_view()),
+    path("usuarios/<int:id>/comentarios",ComentarioUsuarioView.as_view()),
+    path("comentarios", ComentarioView.as_view())
 ]

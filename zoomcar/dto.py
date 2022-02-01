@@ -121,15 +121,17 @@ class TrayectoDto():
         return lista
 
 class ReservaDto():
-    def __init__(self, trayecto, usuario, fechaReserva):
+    def __init__(self, id, trayecto, usuario, fechaReserva):
+        self.id = id
         self.trayecto = trayecto
         self.usuario = usuario
         self.fechaReserva = fechaReserva
 
     def __init__(self, reserva):
-        self.trayecto = reserva.trayecto
+        self.id = reserva.id
+        self.trayecto = TrayectoDto(reserva.trayecto)
         self.usuario = UsuarioDto(reserva.usuario)
-        self.fechaReserva = reserva.fechareserva
+        self.fechaReserva = reserva.fechaReserva
     
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
@@ -165,4 +167,29 @@ class GasolineraDto():
         lista = []
         for u in gasolineras:
             lista.append(GasolineraDto(u))
+        return lista
+
+class ComentarioDto():
+
+    def __init__(self,id,creador,usuario,text):
+        self.id = id
+        self.creador = creador
+        self.usuario = usuario
+        self.text = text
+
+    def __init__(self, comentario):
+        self.id = comentario.id
+        self.creador = UsuarioDto(comentario.creador)
+        self.usuario = UsuarioDto(comentario.usuario)
+        self.text = comentario.text
+    
+    def toJSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+    
+    @staticmethod
+    def toComentarioDto(comentarios):
+        lista = []
+        for c in comentarios:
+            lista.append(ComentarioDto(c))
         return lista

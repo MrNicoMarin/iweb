@@ -1,9 +1,9 @@
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from zoomcar.dto import UsuarioDto, VehiculoDto, TrayectoDto
-from zoomcar.serializers import GasolineraSerializer, UsuarioSerializer, VehiculoSerializer, TrayectoSerializer
-from zoomcar.models import Usuario, Vehiculo, Trayecto, Ubicacion
+from zoomcar.dto import ReservaDto, UsuarioDto, VehiculoDto, TrayectoDto, ComentarioDto
+from zoomcar.serializers import GasolineraSerializer, ReservaSerializer, UsuarioSerializer, VehiculoSerializer, TrayectoSerializer, ComentarioSerializer
+from zoomcar.models import Reserva, Usuario, Vehiculo, Trayecto, Ubicacion, Comentario
 from datetime import date, datetime
 import requests
 from geopy import distance,Nominatim
@@ -11,6 +11,7 @@ import unicodedata
 from pyproj import Transformer
 from google.oauth2 import id_token
 from google.auth.transport import requests
+import pytz
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
 URL_AEMET = "https://opendata.aemet.es/opendata/api/"
@@ -22,6 +23,27 @@ GASOLINERA_RESPONSE = None
 GASOLINERA_TIMESTAMP = 0
 
 MUNICIPIOS_RESPONSE = None
+
+
+def autorizar(request):
+    if request.headers.get('Authorization') is not None:
+            
+        token = request.headers.get('Authorization')
+        idinfo = None
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+        except:
+            return None
+
+        email = idinfo['email']
+
+        try:
+            usuario = Usuario.objects.get(email=email)
+            return usuario
+        except:
+            return None
+    else :
+        return None
 
 
 ### Usuario ###
@@ -85,21 +107,34 @@ class UsuarioIDView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             user = Usuario.objects.get(id=id)
         except:
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+        if usuario.id != user.id:
+            return Response({"mensaje" : "No tienes permiso"}, status=status.HTTP_403_FORBIDDEN)
 
         user.delete()
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self,request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje":"Es necesario el header de autorizacion"},status=status.HTTP_401_UNAUTHORIZED)
+            
         try:
             user = Usuario.objects.get(id=id)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
-   
+
+        if usuario.id != user.id:
+            return Response({"mensaje":"No tienes permiso"},status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = UsuarioSerializer(data=request.data)
         if serializer.is_valid():
@@ -164,12 +199,13 @@ class VehiculoView(APIView):
         return Response(serializer.data,status=status.HTTP_200_OK,headers={'X-Total-Count' : vehiculos.count()})
     
     def post(self, request, format=None):
+        usuario = autorizar(request)
+
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+
         serializer = VehiculoSerializer(data=request.data)
-        if serializer.is_valid() and serializer.validated_data.get('usuario') is not None and serializer.validated_data.get('modelo') is not None and serializer.validated_data.get('matricula') is not None and serializer.validated_data.get('plazas') is not None:
-            try:
-                usuario = Usuario.objects.get(id=serializer.validated_data.get('usuario').get('id'))
-            except:
-                return Response({'mensaje' : 'El usuario no existe'}, status=status.HTTP_400_BAD_REQUEST)
+        if serializer.is_valid() and serializer.validated_data.get('modelo') is not None and serializer.validated_data.get('matricula') is not None and serializer.validated_data.get('plazas') is not None:
             
             vehiculo = Vehiculo(usuario=usuario,
             modelo=serializer.validated_data.get('modelo'),
@@ -200,21 +236,34 @@ class VehiculoIDView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def delete(self, request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+        
         try:
             vehiculo = Vehiculo.objects.get(id=id)
         except:
             return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        if usuario.id != vehiculo.usuario.id:
+            return Response({"mensaje":"No tien permiso"},status=status.HTTP_401_UNAUTHORIZED)
 
         vehiculo.delete()
         
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def put(self,request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+        
         try:
             vehiculo = Vehiculo.objects.get(id=id)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
-   
+
+        if usuario.id != vehiculo.usuario.id:
+            return Response({"mensaje":"No tien permiso"},status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = VehiculoSerializer(data=request.data)
         if serializer.is_valid():
@@ -303,13 +352,12 @@ class TrayectoView(APIView):
         return Response(serializer.data,status=status.HTTP_200_OK,headers={'X-Total-Count' : trayectos.count()})
 
     def post(self, request, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje":"Es necesario el header de autorizacion"},status=status.HTTP_401_UNAUTHORIZED)
+            
         serializer = TrayectoSerializer(data=request.data)
-        if serializer.is_valid() and serializer.validated_data.get('piloto') is not None and serializer.validated_data.get('origen') is not None and serializer.validated_data.get('destino') is not None and serializer.validated_data.get('vehiculo') is not None and serializer.validated_data.get('fechaSalida') is not None:
-            try:
-                piloto = Usuario.objects.get(id=serializer.validated_data.get('piloto').get('id'))
-            except:
-                return Response({'mensaje' : 'El piloto no existe'}, status=status.HTTP_400_BAD_REQUEST)
-
+        if serializer.is_valid() and serializer.validated_data.get('origen') is not None and serializer.validated_data.get('destino') is not None and serializer.validated_data.get('vehiculo') is not None and serializer.validated_data.get('fechaSalida') is not None:
             try:
                 origen = Ubicacion.objects.get(latitud=serializer.validated_data.get('origen').get('latitud'), longitud=serializer.validated_data.get('origen').get('longitud'))
             except:
@@ -336,7 +384,7 @@ class TrayectoView(APIView):
             
             try:
                 vehiculo = Vehiculo.objects.get(id=serializer.validated_data.get('vehiculo').get('id'))
-                if vehiculo.usuario.id != piloto.id:
+                if vehiculo.usuario.id != usuario.id:
                     return Response({'mensaje' : 'El vehiculo no pertenece al piloto'}, status=status.HTTP_400_BAD_REQUEST)
             except:
                 return Response({'mensaje' : 'El vehiculo no existe'}, status=status.HTTP_400_BAD_REQUEST)
@@ -344,7 +392,7 @@ class TrayectoView(APIView):
             
             trayecto = Trayecto(origen = origen,
                 destino = destino,
-                piloto = piloto,
+                piloto = usuario,
                 vehiculo = vehiculo,
                 precio = serializer.validated_data.get('precio'),
                 fechaSalida = serializer.validated_data.get('fechaSalida'))
@@ -372,20 +420,36 @@ class TrayectoIDView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
         
     def delete(self, request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+
         try:
             trayecto = Trayecto.objects.get(id=id)
         except:
             return Response(status=status.HTTP_204_NO_CONTENT)
+        
+        if usuario.id != trayecto.piloto.id:
+            return Response({"mensaje":"No tien permiso"},status=status.HTTP_401_UNAUTHORIZED)
 
         trayecto.delete()
         
         return Response(status=status.HTTP_204_NO_CONTENT)
+        
+
 
     def put(self,request, id, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+            
         try:
             trayecto = Trayecto.objects.get(id=id)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if usuario.id != trayecto.piloto.id:
+            return Response({"mensaje":"No tiene permiso"},status=status.HTTP_401_UNAUTHORIZED)
 
         serializer = TrayectoSerializer(data=request.data)
 
@@ -713,3 +777,112 @@ class LoginGoogle(APIView):
 
         else :
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_400_BAD_REQUEST)
+
+# Reservas
+
+class ReservasView(APIView):
+    def post(self,request, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        serializer = ReservaSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                trayecto = Trayecto.objects.get(id=serializer.validated_data.get('trayecto').get('id'))
+            except:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+                
+            utc = pytz.UTC
+            now = utc.localize(datetime.now())
+            
+            if trayecto.fechaSalida < now:
+                return Response({"mensaje" : "Ha pasado la fecha"}, status=status.HTTP_400_BAD_REQUEST)
+
+            reserva = Reserva(
+                trayecto = trayecto,
+                usuario = usuario
+            )
+
+            reserva.save()
+        else:
+            return Response({"mensaje" : "Campos incorrectos"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_201_CREATED)
+
+#Eliminar reservas
+class ReservaIDView(APIView):
+    def delete(self,request,id,format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        try:
+            reserva = Reserva.objects.get(id=id)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        
+        if reserva.usuario.id != usuario.id:
+            return Response({"mensaje","No estas autorizado para borrarlo"},status=status.HTTP_401_UNAUTHORIZED)
+        
+        reserva.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# Reservas de una persona /usuarios/{id}/reservas
+class ReservasUsuarioView(APIView):
+    def get(self,request,id,format=None):
+        
+        reservas = Reserva.objects.filter(usuario__id=id)
+        reservasDTO = ReservaDto.toReservaDto(reservas)
+        serializer = ReservaSerializer(reservasDTO, many=True)
+
+        return Response(serializer.data,status=status.HTTP_200_OK,headers={"X-Total-Count":reservas.count()})
+
+# Reservas de un trayecto /trayectos/{id}/reservas
+class ReservasTrayectosView(APIView):
+    def get(self,request,id,format=None):
+        
+        reservas = Reserva.objects.filter(trayecto__id=id)
+        reservasDTO = ReservaDto.toReservaDto(reservas)
+        serializer = ReservaSerializer(reservasDTO, many=True)
+
+        return Response(serializer.data,status=status.HTTP_200_OK,headers={"X-Total-Count":reservas.count()})
+
+# Comentarios
+class ComentarioView(APIView):
+    def post(self,request, format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+            
+        serializers = ComentarioSerializer(data=request.data)
+        if serializers.is_valid():
+            try:
+                user = Usuario.objects.get(id=serializers.validated_data.get("usuario").get("id"))
+            except:
+                return Response(status=status.HTTP_404_NOT_FOUND)
+            
+            comentario = Comentario(
+                creador= usuario,
+                usuario= user,
+                text= serializers.validated_data.get("text")
+            )
+        else:
+            return Response({'mensaje' : 'Campos no validos'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            comentario.save()
+        except:
+            return Response({"mensaje":"Error al guarda el comentario"},status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+# Comentarios de una persona /usuarios/{id}/comentarios
+class ComentarioUsuarioView(APIView):
+    def get(self,request,id,format=None):
+        comentario = Comentario.objects.filter(creador__id=id)
+        dto = ComentarioDto.toComentarioDto(comentario)
+        serializers = ComentarioSerializer(dto,many=True)
+
+        return Response(serializers.data,status=status.HTTP_200_OK,headers={"X-Total-Count":comentario.count()})

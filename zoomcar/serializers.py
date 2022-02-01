@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from zoomcar.dto import GasolineraDto, UbicacionDto, UsuarioDto, VehiculoDto, TrayectoDto
+from zoomcar.dto import ComentarioDto, GasolineraDto, ReservaDto, UbicacionDto, UsuarioDto, VehiculoDto, TrayectoDto
 
 class UsuarioSerializer(serializers.Serializer):
 
@@ -50,9 +50,13 @@ class TrayectoSerializer(serializers.Serializer):
         return TrayectoDto(**validated_data)
 
 class ReservaSerializer(serializers.Serializer):
-    trayecto = TrayectoSerializer()
-    usuario = UsuarioSerializer()
-    fechaReserva = serializers.DateTimeField()
+    id = serializers.IntegerField(required=False)
+    trayecto = TrayectoSerializer(required=False)
+    usuario = UsuarioSerializer(required=False)
+    fechaReserva = serializers.DateTimeField(required=False)
+
+    def create(self, validated_data):
+        return ReservaDto(**validated_data)
 
 class GasolineraSerializer(serializers.Serializer):
 
@@ -68,4 +72,13 @@ class GasolineraSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         return GasolineraDto(**validated_data)
+
+class ComentarioSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    creador = UsuarioSerializer(required=False)
+    usuario = UsuarioSerializer(required=False)
+    text = serializers.CharField(max_length=5000,required=False)
+
+    def create(self, validated_data):
+        return ComentarioDto(**validated_data)
 
