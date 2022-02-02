@@ -10,7 +10,7 @@ from geopy import distance,Nominatim
 import unicodedata
 from pyproj import Transformer
 from google.oauth2 import id_token
-from google.auth.transport import requests
+from google.auth import transport
 import pytz
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
@@ -31,7 +31,7 @@ def autorizar(request):
         token = request.headers.get('Authorization')
         idinfo = None
         try:
-            idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+            idinfo = id_token.verify_oauth2_token(token, transport.requests.Request(), CLIENT_ID)
         except:
             return None
 
@@ -539,6 +539,22 @@ class VehiculosUsuarioView (APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         vehiculos = user.vehiculo_set.all()
+
+        if request.query_params.get('modelo') is not None:
+           vehiculos =  vehiculos.filter(modelo__icontains=request.query_params.get('modelo'))
+        
+        if request.query_params.get('matricula') is not None:
+           vehiculos =  vehiculos.filter(matricula__icontains=request.query_params.get('matricula'))
+        
+        if request.query_params.get('color') is not None:
+           vehiculos =  vehiculos.filter(color__icontains=request.query_params.get('color'))
+        
+        if request.query_params.get('plazas') is not None:
+           vehiculos =  vehiculos.filter(plazas=int(request.query_params.get('plazas')))
+        
+        if (request.query_params.get('limit') is not None and request.query_params.get('offset') is not None):
+            vehiculos = vehiculos[int(request.query_params.get('offset')):int(request.query_params.get('offset'))+int(request.query_params.get('limit'))]
+
         vehiculosDto = VehiculoDto.toVehiculoDto(vehiculos)
         serializers = VehiculoSerializer(vehiculosDto,many=True)
 
@@ -745,7 +761,7 @@ class LoginGoogle(APIView):
             token = request.headers.get('Authorization')
             idinfo = None
             try:
-                idinfo = id_token.verify_oauth2_token(token, requests.Request(), CLIENT_ID)
+                idinfo = id_token.verify_oauth2_token(token, transport.requests.Request(), CLIENT_ID)
             except:
                 return Response({"mensaje": "Token caducado"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -756,8 +772,11 @@ class LoginGoogle(APIView):
                 usuario = Usuario.objects.get(email=email)
             except:
 
-                name = idinfo['name']
-                apellidos = idinfo['family_name']
+                name = idinfo['given_name']
+                try:
+                    apellidos = idinfo['family_name']
+                except:
+                    apellidos = ""
                 imagen = idinfo['picture']
 
                 
@@ -766,7 +785,7 @@ class LoginGoogle(APIView):
                     name = name,
                     apellidos = apellidos,
                     imagen = imagen,
-                    fechaNacimiento = datetime.today()
+                    fechaNacimiento = date.today()
                 )
 
                 usuario.save()
