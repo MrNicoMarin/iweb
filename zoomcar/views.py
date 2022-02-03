@@ -568,6 +568,34 @@ class TrayectosUsuarioView (APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         trayectos = user.trayecto_set.all()
+
+        if request.query_params.get('precioMin') is not None:
+            precioMin = float(request.query_params.get('precioMin'))
+            trayectos = trayectos.filter(precio__gte = precioMin)
+        
+        if request.query_params.get('precioMax') is not None:
+            precioMax = float(request.query_params.get('precioMax'))
+            trayectos = trayectos.filter(precio__lte = precioMax)
+        
+        if(request.query_params.get('fechaMin') is not None):
+            fechaMin = request.query_params.get('fechaMin')
+            trayectos = trayectos.filter(fechaSalida__gte = fechaMin)
+
+        if(request.query_params.get('fechaMax') is not None):
+            fechaMax = request.query_params.get('fechaMax')
+            trayectos = trayectos.filter(fechaSalida__lte = fechaMax)
+
+        if (request.query_params.get('origen') is not None):
+            origen = str(unicodedata.normalize('NFKD',request.query_params.get('origen')).encode('ASCII','ignore').strip().decode('utf-8'))
+            trayectos = trayectos.filter(origen__municipio__icontains=origen)
+
+        if (request.query_params.get('destino') is not None):
+            destino = str(unicodedata.normalize('NFKD',request.query_params.get('destino')).encode('ASCII','ignore').strip().decode('utf-8'))
+            trayectos = trayectos.filter(destino__municipio__icontains=destino)
+
+        if (request.query_params.get('limit') is not None and request.query_params.get('offset') is not None):
+            trayectos = trayectos[int(request.query_params.get('offset')):int(request.query_params.get('offset'))+int(request.query_params.get('limit'))]
+
         trayectosDto = TrayectoDto.toTrayectoDto(trayectos)
         serializers = TrayectoSerializer(trayectosDto,many=True)
 
@@ -797,6 +825,22 @@ class LoginGoogle(APIView):
         else :
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_400_BAD_REQUEST)
 
+class LoginGoogleCheckView(APIView):
+    def post(self,request,format=None):
+        if request.headers.get('Authorization') is not None:
+            
+            token = request.headers.get('Authorization')
+            idinfo = None
+            try:
+                id_token.verify_oauth2_token(token, transport.requests.Request(), CLIENT_ID)
+            except:
+                return Response({"mensaje": "caducado"}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"mensaje" : "ok"},status=status.HTTP_200_OK)
+
+        else :
+            return Response({"mensaje" : "header"}, status=status.HTTP_400_BAD_REQUEST)
+
 # Reservas
 
 class ReservasView(APIView):
@@ -817,6 +861,9 @@ class ReservasView(APIView):
             
             if trayecto.fechaSalida < now:
                 return Response({"mensaje" : "Ha pasado la fecha"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if trayecto.reserva_set.all().count() >= trayecto.vehiculo.plazas - 1:
+                return Response({"mensaje" : "Limite de plazas"}, status=status.HTTP_400_BAD_REQUEST)
 
             reserva = Reserva(
                 trayecto = trayecto,
@@ -900,7 +947,7 @@ class ComentarioView(APIView):
 # Comentarios de una persona /usuarios/{id}/comentarios
 class ComentarioUsuarioView(APIView):
     def get(self,request,id,format=None):
-        comentario = Comentario.objects.filter(creador__id=id)
+        comentario = Comentario.objects.filter(usuario__id=id)
         dto = ComentarioDto.toComentarioDto(comentario)
         serializers = ComentarioSerializer(dto,many=True)
 

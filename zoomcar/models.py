@@ -65,7 +65,7 @@ class Trayecto(models.Model):
 class Reserva(models.Model):
     trayecto = models.ForeignKey(Trayecto, on_delete=models.CASCADE)
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    fechaReserva = models.DateTimeField(default=datetime.now)
+    fechaReserva = models.DateTimeField(default=datetime.now())
 
 class Comentario(models.Model):
     creador = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name="creador")
