@@ -965,10 +965,9 @@ class LoginTwitterView(APIView):
         if usuario is None:
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        json = request.data.json()
 
         try:
-            token = json.get('token')
+            token = request.data.get('token')
         except:
             return Response({"mensaje" : "Es necesario el header Token"}, status=status.HTTP_400_BAD_REQUEST)
 
