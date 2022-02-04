@@ -960,7 +960,7 @@ class ComentarioUsuarioView(APIView):
         return Response(serializers.data,status=status.HTTP_200_OK,headers={"X-Total-Count":comentario.count()})
 
 class LoginTwitterView(APIView):
-    def post(self, request,id,format=None):
+    def post(self, request,format=None):
         usuario = autorizar(request)
         if usuario is None:
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
