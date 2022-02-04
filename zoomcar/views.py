@@ -1,3 +1,4 @@
+from urllib.request import Request
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -12,6 +13,8 @@ from pyproj import Transformer
 from google.oauth2 import id_token
 from google.auth import transport
 import pytz
+from tweepy.auth import OAuth2UserHandler
+import tweepy
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
 URL_AEMET = "https://opendata.aemet.es/opendata/api/"
@@ -152,9 +155,13 @@ class UsuarioIDView(APIView):
 
             if (serializer.validated_data.get('fechaNacimiento') is not None):
                 user.fechaNacimiento = serializer.validated_data.get('fechaNacimiento')
+
+            if (serializer.validated_data.get('twitterToken') is not None):
+                user.twitterToken = serializer.validated_data.get('twitterToken')
                 
             if (serializer.validated_data.get('password') is not None):
                 user.set_password(serializer.validated_data.get('password'))
+                
         else:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
@@ -813,7 +820,8 @@ class LoginGoogle(APIView):
                     name = name,
                     apellidos = apellidos,
                     imagen = imagen,
-                    fechaNacimiento = date.today()
+                    fechaNacimiento = date.today(),
+                    twitterToken = None
                 )
 
                 usuario.save()

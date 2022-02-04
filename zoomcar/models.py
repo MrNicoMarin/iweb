@@ -33,6 +33,7 @@ class Usuario (AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(default=False)
     imagen = models.CharField(max_length=100)
     fechaNacimiento = models.DateField()
+    twitterToken = models.CharField(max_length=500)
 
     objects = UsuarioManager()
 

@@ -17,6 +17,7 @@ class UsuarioDto():
         self.apellidos = usuario.apellidos
         self.imagen = usuario.imagen
         self.fechaNacimiento = usuario.fechaNacimiento
+        self.twitterToken = usuario.twitterToken
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
