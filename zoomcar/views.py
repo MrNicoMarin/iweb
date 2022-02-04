@@ -281,7 +281,7 @@ class VehiculoIDView(APIView):
                 vehiculo.usuario = usuario
                 
             if (serializer.validated_data.get('modelo') is not None):
-                vehiculo.email = serializer.validated_data.get('modelo')
+                vehiculo.modelo = serializer.validated_data.get('modelo')
                 
             if (serializer.validated_data.get('color') is not None):
                 vehiculo.color = serializer.validated_data.get('color')
