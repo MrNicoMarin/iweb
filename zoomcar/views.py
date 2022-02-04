@@ -986,7 +986,7 @@ class LoginTwitterView(APIView):
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        url = 'https://api.twitter.com/2/oauth2/token?code=' + token + '&grant_type=authorization_code&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ&redirect_uri=http://localhost:3000/loginTwitter&code_verifier=challenge'
+        url = 'https://api.twitter.com/2/oauth2/token?code=' + token + '&grant_type=authorization_code&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ&redirect_uri=https://zoomcar-iweb.herokuapp.com/loginTwitter&code_verifier=challenge'
 
         response = requests.post(url,headers)
         json = response.json()
