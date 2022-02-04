@@ -958,3 +958,22 @@ class ComentarioUsuarioView(APIView):
         serializers = ComentarioSerializer(dto,many=True)
 
         return Response(serializers.data,status=status.HTTP_200_OK,headers={"X-Total-Count":comentario.count()})
+
+class LoginTwitterView(APIView):
+    def post(self, request,id,format=None):
+        usuario = autorizar(request)
+        if usuario is None:
+            return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        if request.query_params.get('Token') is None:
+            return Response({"mensaje" : "Es necesario el header Token"}, status=status.HTTP_400_BAD_REQUEST)
+
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        url = 'https://api.twitter.com/2/oauth2/token?code=' + request.query_params.get('Token') + '&grant_type=authorization_code&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ&redirect_uri=http://localhost:3000/loginTwitter&code_verifier=challenge'
+
+        response = requests.post(url,headers)
+        json = response.json()
+
+        return Response({'mensaje':json.get('access_token')}, status=status.HTTP_200_OK)
