@@ -13,8 +13,6 @@ from pyproj import Transformer
 from google.oauth2 import id_token
 from google.auth import transport
 import pytz
-from tweepy.auth import OAuth2UserHandler
-import tweepy
 
 URL_GASOLINERAS = "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/"
 URL_AEMET = "https://opendata.aemet.es/opendata/api/"
