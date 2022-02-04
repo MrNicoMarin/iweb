@@ -965,13 +965,18 @@ class LoginTwitterView(APIView):
         if usuario is None:
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
 
-        if request.query_params.get('Token') is None:
+        json = request.data.json()
+
+        try:
+            token = json.get('token')
+        except:
             return Response({"mensaje" : "Es necesario el header Token"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         headers = {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
-        url = 'https://api.twitter.com/2/oauth2/token?code=' + request.query_params.get('Token') + '&grant_type=authorization_code&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ&redirect_uri=http://localhost:3000/loginTwitter&code_verifier=challenge'
+        url = 'https://api.twitter.com/2/oauth2/token?code=' + token + '&grant_type=authorization_code&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ&redirect_uri=http://localhost:3000/loginTwitter&code_verifier=challenge'
 
         response = requests.post(url,headers)
         json = response.json()
