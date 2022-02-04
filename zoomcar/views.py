@@ -416,6 +416,24 @@ class TrayectoView(APIView):
                         'Authorization' : 'Bearer ' + usuario.twitterToken
                     }
                     response = requests.post(url, json={'text': text}, headers=headers)
+                    if not response.ok:
+                        headersRefresh = {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                        urlRefresh = 'https://api.twitter.com/2/oauth2/token?refresh_token=' + usuario.twitterTokenRefresh + '&grant_type=refresh_token&client_id=a20wU2JuTnE3SGlfSmh0NnAtcDQ6MTpjaQ'
+                        responseRefresh = requests.post(url=urlRefresh, headers=headersRefresh)
+                        json = responseRefresh.json()
+
+                        usuario.twitterToken = json.get('access_token')
+                        usuario.twitterTokenRefresh = json.get('refresh_token')
+                        usuario.save()
+
+                        headers = {
+                            'Content-type': 'application/json',
+                            'Authorization' : 'Bearer ' + usuario.twitterToken
+                        }
+                        response = requests.post(url, json={'text': text}, headers=headers)
+
             except:
                 return Response({'mensaje':'No se ha podido crear el trayecto'}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -992,6 +1010,7 @@ class LoginTwitterView(APIView):
         json = response.json()
 
         usuario.twitterToken = json.get('access_token')
+        usuario.twitterTokenRefresh = json.get('refresh_token')
         usuario.save()
 
         return Response(status=status.HTTP_200_OK)
