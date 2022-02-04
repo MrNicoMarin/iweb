@@ -1,3 +1,4 @@
+import json
 from urllib.request import Request
 from rest_framework import status
 from rest_framework.response import Response
@@ -395,6 +396,8 @@ class TrayectoView(APIView):
                 return Response({'mensaje' : 'El vehiculo no existe'}, status=status.HTTP_400_BAD_REQUEST)
                 
             
+            
+
             trayecto = Trayecto(origen = origen,
                 destino = destino,
                 piloto = usuario,
@@ -404,6 +407,15 @@ class TrayectoView(APIView):
             try:
                 trayecto.save()
                 trayecto.paradas.add(*paradasBD)
+
+                if usuario.twitterToken is not None:
+                    url = 'https://api.twitter.com/2/tweets'
+                    text = 'He publicado un nuevo viaje desde ' + trayecto.origen.municipio + ' a ' + trayecto.destino.municipio + ", echale un vistazo en https://zoomcar-iweb.herokuapp.com/trayectos/" + str(trayecto.id)
+                    headers = {
+                        'Content-type': 'application/json',
+                        'Authorization' : 'Bearer ' + usuario.twitterToken
+                    }
+                    response = requests.post(url, json={'text': text}, headers=headers)
             except:
                 return Response({'mensaje':'No se ha podido crear el trayecto'}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -965,7 +977,6 @@ class LoginTwitterView(APIView):
         if usuario is None:
             return Response({"mensaje" : "Es necesario el header Authorization"}, status=status.HTTP_401_UNAUTHORIZED)
 
-
         try:
             token = request.data.get('token')
         except:
@@ -980,4 +991,7 @@ class LoginTwitterView(APIView):
         response = requests.post(url,headers)
         json = response.json()
 
-        return Response({'mensaje':json.get('access_token')}, status=status.HTTP_200_OK)
+        usuario.twitterToken = json.get('access_token')
+        usuario.save()
+
+        return Response(status=status.HTTP_200_OK)
