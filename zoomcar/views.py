@@ -159,7 +159,6 @@ class UsuarioIDView(APIView):
                 user.set_password(serializer.validated_data.get('password'))
                 
         else:
-            print(serializer.errors)
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -293,7 +292,6 @@ class VehiculoIDView(APIView):
             if (serializer.validated_data.get('plazas') is not None):
                 vehiculo.plazas = serializer.validated_data.get('plazas')
         else:
-            print(serializer.errors)
             return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
         try:
