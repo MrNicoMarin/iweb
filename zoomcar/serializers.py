@@ -11,7 +11,7 @@ class UsuarioSerializer(serializers.Serializer):
     apellidos = serializers.CharField(required=False)
     imagen = serializers.CharField(max_length=100,required=False)
     fechaNacimiento = serializers.DateField(required=False)
-    twitterToken = serializers.CharField(max_length=500,required=False, allow_null=True)
+    twitterToken = serializers.BooleanField(required=False)
 
     def create(self, validated_data):
         return UsuarioDto(**validated_data)

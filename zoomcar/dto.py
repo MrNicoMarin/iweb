@@ -9,7 +9,7 @@ class UsuarioDto():
         self.apellidos = apellidos
         self.imagen = imagen
         self.fechaNacimiento = fechaNacimiento
-        self.twitterToken = twitterToken
+        self.twitterToken = twitterToken is not None
 
     def __init__(self, usuario):
         self.id = usuario.id
@@ -18,7 +18,7 @@ class UsuarioDto():
         self.apellidos = usuario.apellidos
         self.imagen = usuario.imagen
         self.fechaNacimiento = usuario.fechaNacimiento
-        self.twitterToken = usuario.twitterToken
+        self.twitterToken = usuario.twitterToken is not None
 
     def toJSON(self):
         return json.dumps(self, default=lambda o: o.__dict__, 
