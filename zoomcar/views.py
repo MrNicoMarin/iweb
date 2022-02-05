@@ -154,15 +154,13 @@ class UsuarioIDView(APIView):
 
             if (serializer.validated_data.get('fechaNacimiento') is not None):
                 user.fechaNacimiento = serializer.validated_data.get('fechaNacimiento')
-
-            if (serializer.validated_data.get('twitterToken') is not None):
-                user.twitterToken = serializer.validated_data.get('twitterToken')
                 
             if (serializer.validated_data.get('password') is not None):
                 user.set_password(serializer.validated_data.get('password'))
                 
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            print(serializer.errors)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
         try:
             user.save()
@@ -295,7 +293,8 @@ class VehiculoIDView(APIView):
             if (serializer.validated_data.get('plazas') is not None):
                 vehiculo.plazas = serializer.validated_data.get('plazas')
         else:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            print(serializer.errors)
+            return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
 
         try:
             vehiculo.save()

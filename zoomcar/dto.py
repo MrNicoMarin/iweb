@@ -2,13 +2,14 @@ import json
 
 class UsuarioDto():
     
-    def __init__(self, id, name, email, apellidos, imagen, fechaNacimiento):
+    def __init__(self, id, name, email, apellidos, imagen, fechaNacimiento, twitterToken):
         self.id = id
         self.name = name
         self.email = email
         self.apellidos = apellidos
         self.imagen = imagen
         self.fechaNacimiento = fechaNacimiento
+        self.twitterToken = twitterToken
 
     def __init__(self, usuario):
         self.id = usuario.id
